@@ -13,6 +13,7 @@ pub:{[t;x] ws.pushall("upd";(t;x))}
 
 init:{  
   conns::1!select name,proc,port,status:`down,pid:0Ni,lastheartbeat:0Np,attempts:0,goal:`,lastattempt:0Np,lastattempt:0Np,used:0N,heap:0N from .ipc.conns where proc<>`hub;
+  .cron.add[`.hub.check;0Np;.conf.HUB_CHECK_PERIOD];
   .ipc.ping[;".proc.reporthealth[]"]each exec name from .ipc.conns;
   }
 
@@ -28,7 +29,7 @@ up:{[x]
  }
 
 down:{[x]
- if[.proc.isstack x;.z.s each .proc.stackprocs x;:(::)];
+ if[any x~/:(`;`all;::;st:.proc.ACTIVE_STACK);.z.s each .proc.stackprocs st;:(::)];
  if[null st:(e:conns x)`status;'"invalid process name ",string x];
  if[st=`down;:()];
  if[0=0^e`attempts;
@@ -38,10 +39,9 @@ down:{[x]
 
 bounce:{down x;up x;}
 
-heartbeat:{[pname;info] 
-  d:update pid:.z.i from info;
-  if[null st:(e:conns pname)`status;:.log.error"invalid process name",string[pname]," ",.Q.s1 d];
-  .hub.conns[pname],:select used,heap,status:`up,pid,lastheartbeat:time,attempts:0N from d;
+heartbeat:{[pname;info]
+  if[null st:(e:conns pname)`status;:.log.error"invalid process name",string[pname]," ",.Q.s1 info];
+  .hub.conns[pname],:select used,heap,status:`up,pid,lastheartbeat:time,attempts:0N from info;
   }
 
 upall:{up each exec name from .hub.conns;}
@@ -50,8 +50,9 @@ downall:{down each exec name from .hub.conns;}
 updAPI:{pub[`processes;0!.hub.conns];}
 
 check:{
-  update status:`down`busy .proc.isup each name from`.hub.conns where status=`up,lastheartbeat<.z.p-.conf.HUB_BUSY_PERIOD;
+  update status:`down`up .proc.isup each name from`.hub.conns where status=`up;
   update pid:0Ni,heap:0N,used:0N from `.hub.conns where status=`down;
+  update status:`busy from`.hub.conns where status=`up where status=`up,lastheartbeat<.z.p-.conf.HUB_BUSY_PERIOD;
   if[count tostart:select from .hub.conns where goal=`up,status=`down,attempts<.conf.MAX_START_ATTEMPTS;
     if[count tostart:delete from tostart where not null lastattempt,.conf.HUB_ATTEMPT_PERIOD>.z.p-lastattempt;
       stilldown:exec name from .hub.conns where status=`down;
@@ -59,5 +60,3 @@ check:{
       .hub.up each exec name from tostart where 0=count each waiting_on]];
   updAPI[];
   }
-
-.cron.add[`.hub.check;0Np;.conf.HUB_CHECK_PERIOD];
