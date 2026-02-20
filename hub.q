@@ -52,7 +52,7 @@ updAPI:{pub[`processes;0!.hub.conns];}
 check:{
   update status:`down`up .proc.isup each name from`.hub.conns where status=`up;
   update pid:0Ni,heap:0N,used:0N from `.hub.conns where status=`down;
-  update status:`busy from`.hub.conns where status=`up where status=`up,lastheartbeat<.z.p-.conf.HUB_BUSY_PERIOD;
+  update status:`busy from`.hub.conns where status=`up,lastheartbeat<.z.p-.conf.HUB_BUSY_PERIOD;
   if[count tostart:select from .hub.conns where goal=`up,status=`down,attempts<.conf.MAX_START_ATTEMPTS;
     if[count tostart:delete from tostart where not null lastattempt,.conf.HUB_ATTEMPT_PERIOD>.z.p-lastattempt;
       stilldown:exec name from .hub.conns where status=`down;
