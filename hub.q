@@ -1,6 +1,5 @@
 / Hub
 
-.qi.import`log
 .qi.import`ipc
 .qi.import`cron
 
@@ -40,7 +39,7 @@ down:{[x]
 bounce:{down x;up x;}
 
 heartbeat:{[pname;info]
-  if[null st:(e:conns pname)`status;:.log.error"invalid process name",string[pname]," ",.Q.s1 info];
+  if[null st:(e:conns pname)`status;:.qi.error"invalid process name",string[pname]," ",.Q.s1 info];
   .hub.conns[pname],:select used,heap,status:`up,pid,lastheartbeat:time,attempts:0N from info;
   }
 
