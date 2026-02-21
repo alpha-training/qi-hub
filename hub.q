@@ -11,7 +11,7 @@ ws.pushall:{if[count h:where"w"=k!exec p from -38!k:key .z.W;ws.push[h;x]]}
 pub:{[t;x] ws.pushall("upd";(t;x))}
 
 init:{  
-  conns::1!select name,proc,port,status:`down,pid:0Ni,lastheartbeat:0Np,attempts:0,goal:`,lastattempt:0Np,lastattempt:0Np,used:0N,heap:0N from .ipc.conns where proc<>`hub;
+  conns::1!select name,proc,port,status:`down,pid:0Ni,lastheartbeat:0Np,attempts:0N,lastattempt:0Np,lastattempt:0Np,used:0N,heap:0N,goal:` from .ipc.conns where proc<>`hub;
   .cron.add[`.hub.check;0Np;.conf.HUB_CHECK_PERIOD];
   .ipc.ping[;".proc.reporthealth[]"]each exec name from .ipc.conns;
   }
@@ -21,19 +21,24 @@ getlog:{[name] .qi.spath(.conf.processlogs;` sv name,`log)}
 
 / process control functions
 up:{[x]
-  if[any x~/:(`;`all;::;st:.proc.ACTIVE_STACK);.z.s each .proc.stackprocs st;:(::)];
-  if[null(e:conns x)`status;'"invalid process name ",string x];
+  if[11<>abs t:type x;'"Require symbol name(s) of process/stack"];
+  if[11=t;.z.s each x;:(::)];
+  if[x in`all,st:.proc.ACTIVE_STACK;.z.s each .proc.stackprocs st;:(::)];
+  if[null status:(e:conns x)`status;'"invalid process name ",string x];
+  if[status=`up;:(::)];
   conns[x],:select attempts:1+0^attempts,lastattempt:.z.p,goal:`up from e;
   .proc.up x;
  }
 
 down:{[x]
- if[any x~/:(`;`all;::;st:.proc.ACTIVE_STACK);.z.s each .proc.stackprocs st;:(::)];
- if[null st:(e:conns x)`status;'"invalid process name ",string x];
- if[st=`down;:()];
- if[0=0^e`attempts;
-  conns[x],:`goal`attempts!(`down;1);
-  :.proc.down x];
+  if[11<>abs t:type x;'"Require symbol name(s) of process/stack"];
+  if[11=t;.z.s each x;:(::)];
+  if[x in`all,st:.proc.ACTIVE_STACK;.z.s each .proc.stackprocs st;:(::)];
+  if[null status:(e:conns x)`status;'"invalid process name ",string x];
+  if[status=`down;:(::)];
+  if[0=0^e`attempts;
+    conns[x],:`goal`attempts!(`down;1);
+    :.proc.down x];
  }
 
 bounce:{down x;up x;}
@@ -57,5 +62,6 @@ check:{
       stilldown:exec name from .hub.conns where status=`down;
       tostart:tostart lj 1!select name,waiting_on:stilldown inter/:depends_on from .proc.mystack;
       .hub.up each exec name from tostart where 0=count each waiting_on]];
+  update attempts:0N from`.hub.conns where status=goal;
   updAPI[];
   }
