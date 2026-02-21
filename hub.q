@@ -16,6 +16,8 @@ pub:{[t;x] ws.pushall("upd";(t;x))}
   .cron.add[`check;0Np;.conf.HUB_CHECK_PERIOD];
   .event.delhandler[`.z.pc;`.ipc.pc];
   system"p ",.qi.tostr .conf.HUB_PORT;
+  .proc.reporthealth[];
+  .ipc.ping[;".proc.reporthealth[]"]each exec name from procs;
   .cron.start[];
   }
 
