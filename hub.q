@@ -41,7 +41,7 @@ up:updown`up
 down:updown`down
 
 heartbeat:{[pname;info]
-  if[null st:(e:procs pname)`status;:.qi.error"invalid process name",string[pname]," ",.Q.s1 info];
+  if[null st:(e:procs pname)`status;:.qi.error"invalid process name ",string[pname]," ",.Q.s1 info];
   procs[pname],:select used,heap,status:`up,pid,lastheartbeat:time,attempts:0N from info;
   }
 
