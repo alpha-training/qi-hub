@@ -21,7 +21,6 @@ pub:{[t;x] ws.pushall("upd";(t;x))}
 
 getprocess:{[pname] $[null(x:procs pname)`proc;();x]}
 getlog:{[name] .qi.spath(.conf.processlogs;` sv name,`log)}
-resolvename:{$[x like"*.*";x;` sv x,.conf.DEFAULT_STACK]}
 
 / process control functions
 
@@ -29,7 +28,7 @@ updown:{[cmd;x]
   if[11<>abs t:type x;'"Require symbol name(s) of process/stack"];
   if[11=t;.z.s each x;:(::)];
   if[x in`all,as:1_key .proc.stacks;.z.s[cmd]each $[x=`all;as;.proc.stackprocs x];:(::)];
-  if[null status:(e:procs nm:resolvename x)`status;'"invalid process name ",string nm];
+  if[null status:(e:procs nm:.proc.tofullname x)`status;'"invalid process name ",string nm];
   if[status=cmd;:(::)];
   procs[nm],:select attempts:1+0^attempts,lastattempt:.z.p,goal:cmd from e;
   .proc[cmd]nm;
