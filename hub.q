@@ -9,9 +9,6 @@ ws.pushall:{if[count h:where"w"=k!exec p from -38!k:key .z.W;ws.push[h;x]]}
 pub:{[t;x] ws.pushall("upd";(t;x))}
 
 .hub.init:{
-  .proc.self:``name`stackname`pkg`port!(::;`hub;`hub;`hub;.conf.HUB_PORT);
-  .proc.loadstacks[];
-  .proc.ipc.upd select name,proc:pkg,stackname,port from .proc.getstacks[];
   procs::1!select name,proc,stackname,port,status:`down,pid:0Ni,lastheartbeat:0Np,attempts:0N,lastattempt:0Np,lastattempt:0Np,used:0N,heap:0N,goal:` from .ipc.conns where proc<>`hub;
   .cron.add[`check;0Np;.conf.HUB_CHECK_PERIOD];
   .event.delhandler[`.z.pc;`.ipc.pc];
@@ -30,7 +27,7 @@ resolvename:{$[x like"*.*";x;` sv x,.conf.DEFAULT_STACK]}
 updown:{[cmd;x]
   if[11<>abs t:type x;'"Require symbol name(s) of process/stack"];
   if[11=t;.z.s each x;:(::)];
-  if[x in`all,as:1_key .stacks;{x each` sv'.proc.stackprocs[y],'y}[cmd]each $[x=`all;as;x];:(::)];
+  if[x in`all,as:1_key .proc.stacks;{x each` sv'.proc.stackprocs[y],'y}[cmd]each $[x=`all;as;x];:(::)];
   if[null status:(e:procs nm:resolvename x)`status;'"invalid process name ",string nm];
   if[status=cmd;:(::)];
   procs[nm],:select attempts:1+0^attempts,lastattempt:.z.p,goal:cmd from e;
