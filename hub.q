@@ -10,20 +10,27 @@ pub:{[t;x] ws.pushall("upd";(t;x))}
 
 .hub.init:{
   .proc.self,:`name`stackname`fullname!3#`hub;
-  procs::1!select name,proc,stackname,port,status:`down,pid:0Ni,lastheartbeat:0Np,attempts:0N,lastattempt:0Np,lastattempt:0Np,used:0N,heap:0N,goal:` from .ipc.conns where proc<>`hub;
+  procs::1!select name,proc,stackname,port,status:`down,pid:0Ni,lastheartbeat:0Np,attempts:0N,lastattempt:0Np,lastattempt:0Np,used:0N,heap:0N,goal:`,logfile:.proc.getlog each name from .ipc.conns where proc<>`hub;
+  logmap::1!select sym:logfile,name from procs;
   .cron.add[`check;0Np;.conf.HUB_CHECK_PERIOD];
   .event.delhandler[`.z.pc;`.ipc.pc];
   system"p ",.qi.tostr .conf.HUB_PORT;
   .proc.reporthealth[];
-  .ipc.ping[;".proc.reporthealth[]"]each exec name from procs;
+  .ipc.ping[;".proc.reporthealth[]"]each pr:exec name from procs;
+  monprocs[];
   .cron.start[];
   }
 
+/ monitor processes
+monprocs:{
+  .qi.import`mon;
+  .mon.follow each exec logfile from procs;
+  if[null .cron.jobs[f:`.mon.monitor]`period;.cron.add[f;0Np;.conf.MON_PERIOD]];
+  }
+
 getprocess:{[pname] $[null(x:procs pname)`proc;();x]}
-getlog:{[name] .qi.spath(.conf.processlogs;` sv name,`log)}
 
 / process control functions
-
 updown:{[cmd;x]
   if[11<>abs t:type x;'"Require symbol name(s) of process/stack"];
   if[11=t;.z.s each x;:(::)];
@@ -46,7 +53,12 @@ upall:{up each exec name from procs;}
 downall:{down each exec name from procs;}
 isup:{[fullname] .proc.isup . ` vs fullname}
 
-updAPI:{pub[`processes;0!procs];}
+updAPI:{
+  if[sub:count .z.W;pub[`processes;0!procs]];
+  if[not count MonText;:()];
+  if[sub;pub[`Logs;MonText lj logmap]];
+  delete from`MonText;
+  }
 
 check:{
   update status:`down`up isup each name from`procs;
