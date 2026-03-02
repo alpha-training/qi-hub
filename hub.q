@@ -21,7 +21,7 @@ writestack:{[st;x]
 readstack:{[st]
   if[null p:.proc.stackpaths st;
     if[null p:first .qi.paths[.conf.STACKS;.qi.ext[st;".json"]];
-      '"Could not find stack in: ",.qi.spath .conf.STACKS]];
+      '"Could not find a ",.qi.tostr[st],".json in ",.qi.spath .conf.STACKS]];
   read0 p
   }
 
