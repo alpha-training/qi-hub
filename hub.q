@@ -8,6 +8,21 @@ ws.pushall:{if[count h:where"w"=k!exec p from -38!k:key .z.W;ws.push[h;x]]}
 .z.ws:{a:.j.k x;r:@[get;a`cmd;{"kdb error: ",x}];if[not"none"~cb:a`callback;ws.push[.z.w;(cb;r)]]}    / cb=callback
 pub:{[t;x] ws.pushall("upd";(t;x))}
 
+savestack:{[st;x]
+  if[not first r:.qi.try[.j.k;raze x;0];
+    '"stack json is badly formed: ",r 2];
+  if[null p:.proc.stackpaths st;
+    p:.qi.path(.conf.STACKS;`ui;.qi.ext[st;".json"])];
+  p 0: x
+  }
+
+readstack:{[st]
+  if[null p:.proc.stackpaths st;
+    if[null p:first .qi.paths[.conf.STACKS;.qi.ext[st;".json"]];
+      '"Could not find stack in: ",.qi.spath .conf.STACKS]];
+  read0 p
+  }
+
 .hub.init:{
   .proc.self,:`name`stackname`fullname!3#`hub;
   procs::1!select name,proc,stackname,port,status:`down,pid:0Ni,lastheartbeat:0Np,attempts:0N,lastattempt:0Np,lastattempt:0Np,used:0N,heap:0N,goal:`,logfile:.proc.getlog each name from .ipc.conns where proc<>`hub;
