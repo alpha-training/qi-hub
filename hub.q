@@ -8,7 +8,8 @@ ws.pushall:{if[count h:where"w"=k!exec p from -38!k:key .z.W;ws.push[h;x]]}
 .z.ws:{a:.j.k x;r:@[get;a`cmd;{"kdb error: ",x}];if[not"none"~cb:a`callback;ws.push[.z.w;(cb;r)]]}    / cb=callback
 pub:{[t;x] ws.pushall("upd";(t;x))}
 
-savestack:{[st;x]
+/ write a stack's json to disk
+writestack:{[st;x]
   if[not first r:.qi.try[.j.k;raze x;0];
     '"stack json is badly formed: ",r 2];
   if[null p:.proc.stackpaths st;
@@ -16,6 +17,7 @@ savestack:{[st;x]
   p 0: x
   }
 
+/ read a stack's json file from disk
 readstack:{[st]
   if[null p:.proc.stackpaths st;
     if[null p:first .qi.paths[.conf.STACKS;.qi.ext[st;".json"]];
