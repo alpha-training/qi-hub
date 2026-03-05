@@ -110,7 +110,7 @@ check:{
   if[count tostart:select from procs where goal=`up,status=`down,attempts<.conf.MAX_START_ATTEMPTS;
     if[count tostart:delete from tostart where not null lastattempt,.conf.HUB_ATTEMPT_PERIOD>.z.p-lastattempt;
       stilldown:exec name from procs where status=`down;
-      tostart:tostart lj 1!select name,waiting_on:stilldown inter/:depends_on from .proc.mystack;
+      tostart:tostart lj 1!select name,waiting_on:stilldown inter/:publish_to from .proc.mystack;
       up each exec name from tostart where 0=count each waiting_on]];
   update attempts:0N from`procs where status=goal;
   updAPI[];
