@@ -8,7 +8,10 @@ ws.pushall:{if[count h:where"w"=k!exec p from -38!k:key .z.W;ws.push[h;x]]}
 .z.ws:{a:.j.k x;r:@[get;a`cmd;{"kdb error: ",x}];if[not"none"~cb:a`callback;ws.push[.z.w;(cb;r)]]}    / cb=callback
 pub:{[t;x] ws.pushall("upd";(t;x))}
 
-/ write a stack's json to disk
+findstack:{[st] $[not null p:.proc.stackpaths st;p;null p:first .qi.paths[.conf.STACKS;.qi.ext[st;".json"]]; '"Could not find a ",.qi.tostr[st],".json in ",.qi.spath .conf.STACKS;p]}
+cpmvstack:{[copy;st;nst] $[copy;.qi.cp;.qi.os.mv][a;.qi.path(first` vs a:findstack st;` sv nst,`json)]}
+
+/ ---- Start Public API Functions ----
 writestack:{[st;x]
   if[not first r:.qi.try[.j.k;raze x;0];
     '"stack json is badly formed: ",r 2];
@@ -17,13 +20,12 @@ writestack:{[st;x]
   p 0: x
   }
 
-/ read a stack's json file from disk
-readstack:{[st]
-  if[null p:.proc.stackpaths st;
-    if[null p:first .qi.paths[.conf.STACKS;.qi.ext[st;".json"]];
-      '"Could not find a ",.qi.tostr[st],".json in ",.qi.spath .conf.STACKS]];
-  read0 p
-  }
+readstack:{[st] read0 findstack st}
+deletestack:{[st] hdel findstack st}
+
+clonestack:cpmvstack 1
+renamestack:cpmvstack 0
+/ ------ End Public API functions
 
 .hub.init:{
   .proc.self,:`name`stackname`fullname!3#`hub;
