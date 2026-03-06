@@ -27,7 +27,7 @@ writestack:{[st;x]
   }
 
 readstack:{[st] read0 findstack st}
-deletestack:{[st] down st;hdel findstack st}
+deletestack:{[st] down st;hdel findstack st;refresh[]}
 clonestack:{[st;nst] cpmvstack[1;st;nst];refresh[];}
 
 renamestack:{[st;nst]
