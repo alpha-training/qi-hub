@@ -9,7 +9,11 @@ ws.pushall:{if[count h:where"w"=k!exec p from -38!k:key .z.W;ws.push[h;x]]}
 pub:{[t;x] ws.pushall("upd";(t;x))}
 
 findstack:{[st] $[not null p:.proc.stackpaths st;p;null p:first .qi.paths[.conf.STACKS;.qi.ext[st;".json"]]; '"Could not find a ",.qi.tostr[st],".json in ",.qi.spath .conf.STACKS;p]}
-cpmvstack:{[copy;st;nst] $[copy;.qi.cp;.qi.os.mv][a;.qi.path(first` vs a:findstack st;` sv nst,`json)]}
+cpmvstack:{[copy;st;nst]
+  $[.qi.exists dest:.qi.path(first` vs a:findstack st;` sv nst,`json);
+    '.qi.spath[dest]," already exists";
+  $[copy;.qi.cp;.qi.os.mv][a;dest]]
+  }
 
 / ---- Start Public API Functions ----
 writestack:{[st;x]
@@ -17,20 +21,28 @@ writestack:{[st;x]
     '"stack json is badly formed: ",r 2];
   if[null p:.proc.stackpaths st;
     p:.qi.path(.conf.STACKS;`ui;.qi.ext[st;".json"])];
-  p 0: x
+  p 0:x;
+  refresh[];
+  p
   }
 
 readstack:{[st] read0 findstack st}
-deletestack:{[st] hdel findstack st}
+deletestack:{[st] down st;hdel findstack st}
+clonestack:{[st;nst] cpmvstack[1;st;nst];refresh[];}
 
-clonestack:cpmvstack 1
-renamestack:cpmvstack 0
+renamestack:{[st;nst]
+  if[count a:select from procs where stackname=st,status=`up;
+    show a;
+    '"Cannot rename a stack with running processes"];
+  r:cpmvstack[0;st;nst];
+  refresh[];
+  r
+  }
 / ------ End Public API functions
 
 .hub.init:{
   .proc.self,:`name`stackname`fullname!3#`hub;
-  procs::1!select name,proc,stackname,port,status:`down,pid:0Ni,lastheartbeat:0Np,attempts:0N,lastattempt:0Np,lastattempt:0Np,used:0N,heap:0N,goal:`,logfile:.proc.getlog each name from .ipc.conns where proc<>`hub;
-  logmap::1!select sym:logfile,name from procs;
+  updprocs[];
   .cron.add[`check;0Np;.conf.HUB_CHECK_PERIOD];
   .event.delhandler[`.z.pc;`.ipc.pc];
   system"p ",.qi.tostr .conf.HUB_PORT;
@@ -38,6 +50,17 @@ renamestack:cpmvstack 0
   .ipc.ping[;".proc.reporthealth[]"]each pr:exec name from procs;
   monprocs[];
   .cron.start[];
+  }
+
+refresh:{
+  .proc.loadstacks[];
+  updprocs[];
+  }
+
+updprocs:{
+   pr:1!select name,proc,stackname,port,status:`down,pid:0Ni,lastheartbeat:0Np,attempts:0N,lastattempt:0Np,lastattempt:0Np,used:0N,heap:0N,goal:`,logfile:.proc.getlog each name from .ipc.conns where proc<>`hub;
+  `procs set $[`procs in tables`.;pr upsert select from procs where status<>`down;pr];
+  logmap::1!select sym:logfile,name from procs;
   }
 
 / monitor processes
