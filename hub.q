@@ -74,7 +74,7 @@ getprocess:{[pname] $[null(x:procs pname)`proc;();x]}
 
 / process control functions
 updown:{[cmd;x]
-  .log.info -3!(cmd;x);
+  .qi.info -3!(cmd;x);
   if[11<>abs t:type x;'"Require symbol name(s) of process/stack"];
   if[11=t;.z.s each x;:(::)];
   if[x in`all,as:1_key .proc.stacks;.z.s[cmd]each $[x=`all;as;.proc.stackprocs x];:(::)];
