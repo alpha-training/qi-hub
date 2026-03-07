@@ -17,6 +17,7 @@ cpmvstack:{[copy;st;nst]
 
 / ---- Start Public API Functions ----
 writestack:{[st;x]
+  .qi.info(`writestack;st);
   if[not first r:.qi.try[.j.k;raze x;0];
     '"stack json is badly formed: ",r 2];
   if[null p:.proc.stackpaths st;
@@ -26,11 +27,27 @@ writestack:{[st;x]
   p
   }
 
-readstack:{[st] read0 findstack st}
-deletestack:{[st] down st;hdel findstack st;refresh[]}
-clonestack:{[st;nst] cpmvstack[1;st;nst];refresh[];}
+readstack:{[st] 
+  .qi.info(`readstack;st);
+  read0 findstack st
+  }
+
+deletestack:{[st]
+  .qi.info(`deletestack;st);
+  if[count a:select from procs where stackname=st,status<>`down;
+    show a;
+    '"Cannot delete a stack with running processes"];
+  hdel findstack st;
+  refresh[]
+  }
+
+clonestack:{[st;nst] 
+ .qi.info(`clonestack;st;nst);
+  cpmvstack[1;st;nst];refresh[];
+  }
 
 renamestack:{[st;nst]
+  .qi.info(`renamestack;st;nst);
   if[count a:select from procs where stackname=st,status=`up;
     show a;
     '"Cannot rename a stack with running processes"];
@@ -47,12 +64,13 @@ renamestack:{[st;nst]
   .event.delhandler[`.z.pc;`.ipc.pc];
   system"p ",.qi.tostr .conf.HUB_PORT;
   .proc.reporthealth[];
-  .ipc.ping[;".proc.reporthealth[]"]each pr:exec name from procs;
   monprocs[];
   .cron.start[];
+  .ipc.ping[exec name from procs where name<>`hub,.proc.isup'[name;stackname];".proc.reporthealth[]"] ;
   }
 
 refresh:{
+  .qi.info"refresh[]";
   .proc.loadstacks[];
   updprocs[];
   }
@@ -88,6 +106,7 @@ up:updown`up
 down:updown`down
 
 heartbeat:{[pname;info]
+  .qi.info(`heartbeat;pname;info);
   if[null st:(e:procs pname)`status;:.qi.error"invalid process name ",string[pname]," ",.Q.s1 info];
   procs[pname],:select used,heap,status:`up,pid,lastheartbeat:time,attempts:0N from info;
   }
