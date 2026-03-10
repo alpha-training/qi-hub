@@ -76,15 +76,16 @@ refresh:{
   }
 
 updprocs:{
-   pr:1!select name,proc,stackname,port,status:`down,pid:0Ni,lastheartbeat:0Np,attempts:0N,lastattempt:0Np,lastattempt:0Np,used:0N,heap:0N,goal:`,logfile:.proc.getlog each name from .ipc.conns where proc<>`hub;
+   pr:1!select name,proc,stackname,port,status:`down,pid:0Ni,lastheartbeat:0Np,attempts:0N,lastattempt:0Np,lastattempt:0Np,used:0N,heap:0N,goal:` from .ipc.conns where proc<>`hub;
   `procs set $[`procs in tables`.;pr upsert select from procs where status<>`down;pr];
-  logmap::1!select sym:logfile,name from procs;
+  a:select from .proc.getstacks[] where fullname in exec name from procs;
+  .hub.procinfo:1!select name:fullname,logfile:.proc.getlog each name,depends_on:{[st;sub;pt] .proc.tofullnamex[;st]each key[sub]union pt}'[stackname;subscribe_to;publish_to]from a;
   }
 
 / monitor processes
 monprocs:{
   .qi.import`mon;
-  .mon.follow each exec logfile from procs;
+  .mon.follow each exec logfile from .hub.procinfo;
   if[null .cron.jobs[f:`.mon.monitor]`period;.cron.add[f;0Np;.conf.MON_PERIOD]];
   }
 
@@ -118,7 +119,7 @@ isup:{[fullname] .proc.isup . ` vs fullname}
 updAPI:{
   if[sub:count .z.W;pub[`processes;0!procs]];
   if[not count MonText;:()];
-  if[sub;pub[`Logs;MonText lj logmap]];
+  if[sub;pub[`Logs;MonText lj .hub.logmap]];
   delete from`MonText;
   }
 
@@ -129,8 +130,8 @@ check:{
   if[count tostart:select from procs where goal=`up,status=`down,attempts<.conf.MAX_START_ATTEMPTS;
     if[count tostart:delete from tostart where not null lastattempt,.conf.HUB_ATTEMPT_PERIOD>.z.p-lastattempt;
       stilldown:exec name from procs where status=`down;
-      tostart:tostart lj 1!select name,waiting_on:stilldown inter/:publish_to from .proc.mystack;
-      up each exec name from tostart where 0=count each waiting_on]];
+      tostart:tostart lj .hub.procinfo;
+      up each exec name from tostart where 0=count each depends_on inter\:stilldown]];
   update attempts:0N from`procs where status=goal;
   updAPI[];
   }
