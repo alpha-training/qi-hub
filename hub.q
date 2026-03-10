@@ -126,7 +126,7 @@ updAPI:{
 check:{
   update status:`down`up isup each name from`procs;
   update pid:0Ni,heap:0N,used:0N from `procs where status=`down;
-  update status:`busy from`procs where status=`up,lastheartbeat<.z.p-.conf.HUB_BUSY_PERIOD;
+  update status:`busy from`procs where status=`up,not null lastheartbeat,lastheartbeat<.z.p-.conf.HUB_BUSY_PERIOD;
   if[count tostart:select from procs where goal=`up,status=`down,attempts<.conf.MAX_START_ATTEMPTS;
     if[count tostart:delete from tostart where not null lastattempt,.conf.HUB_ATTEMPT_PERIOD>.z.p-lastattempt;
       stilldown:exec name from procs where status=`down;
