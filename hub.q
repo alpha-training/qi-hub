@@ -80,6 +80,7 @@ updprocs:{
   `procs set $[`procs in tables`.;pr upsert select from procs where status<>`down;pr];
   a:select from .proc.getstacks[] where fullname in exec name from procs;
   .hub.procinfo:1!select name:fullname,logfile:.proc.getlog each fullname,depends_on:{[st;sub;pt] .proc.tofullnamex[;st]each key[sub]union pt}'[stackname;subscribe_to;publish_to]from a;
+  .hub.logmap:1!select sym:logfile,name from 0!.hub.procinfo;
   }
 
 / monitor processes
@@ -87,7 +88,6 @@ monprocs:{
   .qi.import`mon;
   .mon.follow each exec logfile from .hub.procinfo;
   if[null .cron.jobs[f:`.mon.monitor]`period;.cron.add[f;0Np;.conf.MON_PERIOD]];
-  .hub.logmap:1!select sym:logfile,name from 0!.hub.procinfo;
   }
 
 getprocess:{[pname] $[null(x:procs pname)`proc;();x]}
