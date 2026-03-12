@@ -87,6 +87,7 @@ monprocs:{
   .qi.import`mon;
   .mon.follow each exec logfile from .hub.procinfo;
   if[null .cron.jobs[f:`.mon.monitor]`period;.cron.add[f;0Np;.conf.MON_PERIOD]];
+  .hub.logmap:1!select sym:logfile,name from 0!.hub.procinfo;
   }
 
 getprocess:{[pname] $[null(x:procs pname)`proc;();x]}
@@ -119,7 +120,7 @@ isup:{[fullname] .proc.isup . ` vs fullname}
 updAPI:{
   if[sub:count .z.W;pub[`processes;0!procs]];
   if[not count MonText;:()];
-  if[sub;pub[`Logs;MonText lj .hub.logmap]];
+  if[sub;pub[`MonText;MonText lj .hub.logmap]];
   delete from`MonText;
   }
 
